@@ -1,17 +1,9 @@
-import sys
-import _thread
-import eventlet.green.thread
-
-# Python 3.13+ compatibility bridge for eventlet green thread
-for _attr in dir(_thread):
-    if not hasattr(eventlet.green.thread, _attr):
-        setattr(eventlet.green.thread, _attr, getattr(_thread, _attr))
-
 import eventlet
 eventlet.monkey_patch()
 
 import os
-from flask import Flask, request
+import sys
+from flask import Flask, request, jsonify
 from config import Config
 from extensions import db, socketio, cors
 
@@ -103,7 +95,7 @@ def create_app(config_class=Config):
             'user_name': user_name,
             'audio_enabled': data.get('audio_enabled', True),
             'video_enabled': data.get('video_enabled', True)
-        }, room=meeting_id, include_self=False)
+        }, to=meeting_id, include_self=False)
 
     @socketio.on('signal-offer')
     def handle_signal_offer(data):
@@ -161,7 +153,7 @@ def create_app(config_class=Config):
                 'socket_id': request.sid,
                 'type': media_type,
                 'enabled': enabled
-            }, room=meeting_id, include_self=False)
+            }, to=meeting_id, include_self=False)
 
     @socketio.on('live-caption')
     def handle_live_caption(data):
@@ -175,7 +167,7 @@ def create_app(config_class=Config):
                 'text': data.get('text', ''),
                 'is_final': data.get('is_final', False),
                 'timestamp': data.get('timestamp')
-            }, room=meeting_id, include_self=True)
+            }, to=meeting_id, include_self=True)
 
     @socketio.on('leave-room')
     def handle_leave_room(data):
@@ -190,7 +182,7 @@ def create_app(config_class=Config):
                 emit('user-left', {
                     'socket_id': socket_id,
                     'user_id': user_info.get('user_id')
-                }, room=meeting_id, include_self=False)
+                }, to=meeting_id, include_self=False)
             leave_room(meeting_id)
 
     @socketio.on('disconnect')
@@ -207,7 +199,7 @@ def create_app(config_class=Config):
                     emit('user-left', {
                         'socket_id': socket_id,
                         'user_id': user_info.get('user_id')
-                    }, room=meeting_id, include_self=False)
+                    }, to=meeting_id, include_self=False)
 
     # Static file serving for built frontend (if built with npm run build)
     dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist'))

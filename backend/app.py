@@ -227,5 +227,6 @@ def create_app(config_class=Config):
 app = create_app()
 
 if __name__ == '__main__':
-    print(">> Starting Smart AI Meeting Assistant server on http://127.0.0.1:5000 via SocketIO (eventlet)...")
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    port = int(os.environ.get('PORT', 5000))
+    print(f">> Starting Smart AI Meeting Assistant server on port {port} via SocketIO (eventlet)...")
+    socketio.run(app, host='0.0.0.0', port=port, debug=False, use_reloader=False)
